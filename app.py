@@ -734,11 +734,234 @@ elif page == "Investigation Data":
 
 st.divider()
 
+
+# =====================================================
+# 2. CUSTOM CSS DESIGN - PREMIUM DARK CYBERSECURITY UI
+# =====================================================
+
 st.markdown("""
-<div class="footer">
-    🛡️ Insider Threat Intelligence Dashboard<br>
-    CERT r4.2 Dataset | Isolation Forest | Python & Streamlit<br>
-    Academic Project | 2026<br>
-    <b>Detected anomalies are candidates for investigation, not confirmed threats.</b>
-</div>
+<style>
+
+/* ===== GLOBAL BACKGROUND ===== */
+
+.stApp {
+    background:
+        radial-gradient(circle at 10% 5%, rgba(99, 102, 241, 0.12), transparent 28%),
+        radial-gradient(circle at 90% 15%, rgba(6, 182, 212, 0.10), transparent 25%),
+        linear-gradient(135deg, #080D1A 0%, #0D1528 50%, #101B31 100%);
+    color: #E8EEFF;
+}
+
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2.5rem;
+    max-width: 1500px;
+}
+
+/* ===== HEADINGS ===== */
+
+h1 {
+    color: #FFFFFF !important;
+    font-weight: 850 !important;
+    letter-spacing: -1px;
+}
+
+h2 {
+    color: #C4B5FD !important;
+    font-weight: 750 !important;
+}
+
+h3 {
+    color: #67E8F9 !important;
+    font-weight: 700 !important;
+}
+
+p, li, label {
+    color: #C7D2E5;
+}
+
+/* ===== SIDEBAR ===== */
+
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #090F20 0%, #111B32 100%);
+    border-right: 1px solid #293858;
+}
+
+[data-testid="stSidebar"] h1 {
+    color: #A78BFA !important;
+    font-size: 25px;
+    font-weight: 900;
+}
+
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: #67E8F9 !important;
+}
+
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span {
+    color: #D5DEF0;
+}
+
+[data-testid="stSidebar"] [role="radiogroup"] label {
+    background: linear-gradient(110deg, #172541, #202E4B);
+    border: 1px solid #304568;
+    padding: 11px 13px;
+    border-radius: 10px;
+    margin-bottom: 7px;
+    transition: all 0.25s ease;
+}
+
+[data-testid="stSidebar"] [role="radiogroup"] label:hover {
+    background: linear-gradient(110deg, #44338A, #174C73);
+    border-color: #8B5CF6;
+    transform: translateX(3px);
+}
+
+/* ===== METRIC CARDS ===== */
+
+[data-testid="stMetric"] {
+    background: linear-gradient(145deg, #182640, #111B30);
+    border: 1px solid #35486B;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s ease;
+}
+
+[data-testid="stMetric"]:hover {
+    border-color: #8B5CF6;
+    box-shadow: 0 0 22px rgba(139, 92, 246, 0.20);
+    transform: translateY(-3px);
+}
+
+[data-testid="stMetricLabel"] {
+    color: #A5B4CF !important;
+    font-size: 13px !important;
+    font-weight: 650 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #67E8F9 !important;
+    font-size: 30px !important;
+    font-weight: 850 !important;
+}
+
+/* ===== CHART CONTAINERS ===== */
+
+[data-testid="stPlotlyChart"] {
+    background: linear-gradient(145deg, #151F35, #101A2D);
+    border: 1px solid #2D4162;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 7px 22px rgba(0,0,0,0.20);
+}
+
+/* ===== DATA TABLES ===== */
+
+[data-testid="stDataFrame"],
+[data-testid="stTable"] {
+    background: #121E33;
+    border: 1px solid #344765;
+    border-radius: 14px;
+    padding: 9px;
+}
+
+/* ===== INPUTS AND SELECT BOXES ===== */
+
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stDateInput"] input {
+    background-color: #17243C !important;
+    color: #FFFFFF !important;
+    border: 1px solid #465A7C !important;
+    border-radius: 9px !important;
+}
+
+[data-testid="stSelectbox"] > div > div {
+    background-color: #17243C;
+    color: #FFFFFF;
+    border-radius: 9px;
+    border: 1px solid #465A7C;
+}
+
+/* ===== BUTTONS ===== */
+
+.stButton button,
+.stDownloadButton button {
+    background: linear-gradient(110deg, #6D4AFF, #0EA5E9);
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-weight: 750;
+    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.25);
+    transition: all 0.25s ease;
+}
+
+.stButton button:hover,
+.stDownloadButton button:hover {
+    background: linear-gradient(110deg, #8B5CF6, #06B6D4);
+    box-shadow: 0 0 20px rgba(103, 232, 249, 0.3);
+    transform: translateY(-2px);
+}
+
+/* ===== INFO / WARNING / SUCCESS BOXES ===== */
+
+[data-testid="stAlert"] {
+    background: #17243C;
+    border: 1px solid #475B80;
+    border-radius: 12px;
+    color: #E0E7FF;
+}
+
+/* ===== CAPTIONS ===== */
+
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: #91A4C2 !important;
+}
+
+/* ===== DIVIDERS ===== */
+
+hr {
+    border-color: #2B3D5D !important;
+}
+
+/* ===== SCROLLBAR ===== */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0B1220;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(#8B5CF6, #06B6D4);
+    border-radius: 10px;
+}
+
+/* ===== FOOTER ===== */
+
+.footer {
+    text-align: center;
+    color: #93A4C2;
+    font-size: 13px;
+    padding: 25px;
+    background: linear-gradient(120deg, #131F35, #182742);
+    border: 1px solid #344765;
+    border-radius: 14px;
+    line-height: 1.9;
+}
+
+/* ===== FOCUS EFFECT ===== */
+
+*:focus-visible {
+    outline: 2px solid #8B5CF6 !important;
+    outline-offset: 2px;
+}
+
+</style>
 """, unsafe_allow_html=True)
