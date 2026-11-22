@@ -1,95 +1,186 @@
-import os
 from pathlib import Path
 
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
-# ============================================================
-# 1. PAGE CONFIGURATION
-# ============================================================
+
 st.set_page_config(
     page_title="Insider Threat Intelligence",
-    page_icon="🛡️",
+    page_icon=":material/shield:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ============================================================
-# 2. THEME
-# ============================================================
+
 if "dashboard_theme" not in st.session_state:
     st.session_state.dashboard_theme = "Dark"
+
 
 with st.sidebar:
     st.markdown(
         """
-        <div class="brand">
-            <div class="brand-icon">🛡️</div>
-            <div>
-                <div class="brand-name">THREAT INTEL</div>
-                <div class="brand-subtitle">INSIDER THREAT MONITORING</div>
-            </div>
+        <div style="padding: 0.25rem 0 0.5rem;">
+            <div style="font-size: 1.1rem; font-weight: 700;">Threat intel</div>
+            <div style="font-size: 0.75rem; opacity: 0.7;">Insider threat monitoring</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
     st.divider()
-    st.session_state.dashboard_theme = st.radio(
-        "APPEARANCE",
+    st.session_state.dashboard_theme = st.segmented_control(
+        "Appearance",
         ["Dark", "Light"],
-        index=0 if st.session_state.dashboard_theme == "Dark" else 1,
-        horizontal=True,
+        default=st.session_state.dashboard_theme,
         key="theme_selector",
     )
 
-DARK = st.session_state.dashboard_theme == "Dark"
 
-if DARK:
-    C = {
-        "bg": "#0B1220",
-        "panel": "#151F32",
-        "panel_alt": "#1B2940",
-        "sidebar": "#0A1020",
-        "text": "#E8EEF8",
-        "muted": "#9AAAC0",
-        "border": "#2A3A54",
-        "accent": "#8B7CFF",
-        "blue": "#4EA1FF",
-        "red": "#FF647C",
-        "green": "#36C995",
-        "orange": "#F6B65B",
-        "grid": "#2A3A54",
-    }
-    PLOT_TEMPLATE = "plotly_dark"
-else:
-    C = {
-        "bg": "#F3F6FC",
-        "panel": "#FFFFFF",
-        "panel_alt": "#F8FAFE",
-        "sidebar": "#17243A",
-        "text": "#17243A",
-        "muted": "#64748B",
-        "border": "#E1E8F0",
-        "accent": "#6558D3",
-        "blue": "#2878D0",
-        "red": "#D9435D",
-        "green": "#15966C",
-        "orange": "#C77A19",
-        "grid": "#E5EAF2",
-    }
-    PLOT_TEMPLATE = "plotly_white"
+APP_DIR = Path(__file__).resolve().parent
+DATA_DIR = APP_DIR / "insider_threat_app"
 
-st.markdown(
-    f"""
-    <style>
-    :root {{
-        --bg: {C['bg']};
-        --panel: {C['panel']};
-        --panel-alt: {C['panel_alt']};
-        --sidebar: {C['sidebar']};
-        --text: {C['text']};
-        --muted: {C['muted']};
-        --border: {C['border']};
-        --accent: {C['accent']};
-    }}
+
+@st.cache_data
+def load_anomalies() -> pd.DataFrame:
+    frame = pd.read_csv(DATA_DIR / "anomaly_results.csv")
+    frame["activity_date"] = pd.to_datetime(frame["activity_date"], errors="coerce")
+    return frame
+
+
+@st.cache_data
+def load_employee_summary() -> pd.DataFrame:
+    return pd.read_csv(DATA_DIR / "employee_summary.csv")
+
+
+anomalies = load_anomalies()
+employee_summary = load_employee_summary()
+
+
+st.title("Insider threat intelligence")
+st.caption("Behavior anomaly monitoring and employee risk overview")
+
+with st.sidebar:
+    st.header("Filters")
+    risk_threshold = st.slider(
+        "Minimum anomaly rate",
+        min_value=0,
+        max_value=100,
+        value=0,
+        step=5,
+        key="risk_threshold",
+    )
+    selected_label = st.segmented_control(
+        "Detection",
+        ["All", "Anomaly", "Normal"],
+        default="All",
+        key="detection_label",
+    )
+
+filtered_summary = employee_summary[
+    employee_summary["anomaly_rate"] >= risk_threshold
+].copy()
+
+filtered_anomalies = anomalies
+if selected_label != "All":
+    filtered_anomalies = filtered_anomalies[
+        filtered_anomalies["anomaly_label"] == selected_label
+    ]
+
+visible_users = set(filtered_summary["user"])
+if risk_threshold > 0:
+    filtered_anomalies = filtered_anomalies[
+        filtered_anomalies["user"].isin(visible_users)
+    ]
+
+total_users = int(filtered_summary["user"].nunique())
+anomaly_count = int(
+    (filtered_anomalies["anomaly_label"] == "Anomaly").sum()
+)
+high_risk_users = int(
+    (filtered_summary["anomaly_rate"] >= 50).sum()
+)
+average_risk = float(filtered_summary["anomaly_rate"].mean())
+if pd.isna(average_risk):
+    average_risk = 0.0
+
+with st.container(horizontal=True):
+    st.metric(
+        "Users monitored",
+        f"{total_users:,}",
+        border=True,
+        height="stretch",
+    )
+    st.metric(
+        "Anomaly detections",
+        f"{anomaly_count:,}",
+        border=True,
+        height="stretch",
+    )
+    st.metric(
+        "High-risk users",
+        f"{high_risk_users:,}",
+        border=True,
+        height="stretch",
+    )
+    st.metric(
+        "Average anomaly rate",
+        f"{average_risk:.1f}%",
+        border=True,
+        height="stretch",
+    )
+
+left_chart, right_chart = st.columns(2)
+
+with left_chart:
+    with st.container(border=True):
+        st.subheader("Detections over time")
+        anomaly_trend = (
+            filtered_anomalies[
+                filtered_anomalies["anomaly_label"] == "Anomaly"
+            ]
+            .dropna(subset=["activity_date"])
+            .groupby("activity_date")
+            .size()
+            .reset_index(name="Anomalies")
+            .sort_values("activity_date")
+        )
+        if anomaly_trend.empty:
+            st.info("No anomalies match the current filters.")
+        else:
+            st.line_chart(
+                anomaly_trend,
+                x="activity_date",
+                y="Anomalies",
+                alt="Anomaly detections over time",
+            )
+
+with right_chart:
+    with st.container(border=True):
+        st.subheader("Highest-risk users")
+        top_users = (
+            filtered_summary.sort_values(
+                ["anomaly_rate", "minimum_anomaly_score"],
+                ascending=[False, True],
+            )
+            .head(10)
+            .set_index("user")
+        )
+        if top_users.empty:
+            st.info("No users match the current risk threshold.")
+        else:
+            st.bar_chart(
+                top_users,
+                y="anomaly_rate",
+                alt="Top employees by anomaly rate",
+            )
+
+with st.container(border=True):
+    st.subheader("Employee risk summary")
+    st.dataframe(
+        filtered_summary.sort_values(
+            ["anomaly_rate", "minimum_anomaly_score"],
+            ascending=[False, True],
+        ),
+        hide_index=True,
+        alt="Employee anomaly summary",
+        height=420,
+    )
