@@ -741,3 +741,4 @@ st.markdown("""
     Academic Project | 2026<br>
     <b>Detected anomalies are candidates for investigation, not confirmed threats.</b>
 </div>
+""", unsafe_allow_html=True)
